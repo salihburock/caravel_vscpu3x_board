@@ -1,109 +1,109 @@
-#!/bin/python3
-
 import serial
 import time
 
 class uart:
     def __init__(self, port, baudrate, bytesize, parity, stopbits):
         self.SerialPort = serial.Serial(port)
-
-        self.SerialPort.baudrate = baudrate  # set Baud rate to 9600
-        self.SerialPort.bytesize = bytesize     # Number of data bits = 8
-        self.SerialPort.parity   = parity    # No parity
-        self.SerialPort.stopbits = stopbits     # Number of Stop bits = 1
-        
-        self.SerialPort.timeout  = 0.05
+        self.SerialPort.baudrate = baudrate
+        self.SerialPort.bytesize = bytesize
+        self.SerialPort.parity   = parity
+        self.SerialPort.stopbits = stopbits
+        # PROTECTED: Increased timeout to give the VSCPU more time to respond
+        self.SerialPort.timeout  = 0.1 
 
         print('\nStatus -> ', self.SerialPort)
         
-
     def Close(self):
         self.SerialPort.close()
 
-    def ReadWord(self, address): # Read 32 bit hex word from memory
+    def ReadWord(self, address):
         RXWord = ""
-        self.SerialPort.reset_input_buffer()
-        
-        # Try read until 8 bytes response is received 
-        while len(RXWord) < 8:
-            self.SerialPort.write(b'R' + bytes(dec2hex(address, 4), 'UTF-8')) # Convert int address to hex and send read request
-        
-            RXWord = ""
+        retry = 0
+        # PROTECTED: Caps the loop at 5 retries to prevent infinite deadlocks
+        while len(RXWord) < 8 and retry < 5:
+            self.SerialPort.reset_input_buffer()
+            self.SerialPort.write(b'R' + bytes(dec2hex(address, 4), 'UTF-8'))
             
-            #time.sleep(self.SerialPort.timeout) # Wait read timeout
-            
-            for i in range(8): # Read all hex values from RX and concat
-                RXHex = self.SerialPort.read()
-                RXWord = RXWord + str(RXHex, 'UTF-8')
-            
-        # self.SerialPort.reset_input_buffer()
+            # PROTECTED: Block-reads exactly 8 bytes instead of looping 1 by 1
+            raw_bytes = self.SerialPort.read(8)
+            if len(raw_bytes) == 8:
+                try:
+                    RXWord = raw_bytes.decode('UTF-8')
+                except UnicodeDecodeError:
+                    RXWord = ""
+            retry += 1
         return RXWord 
     
-    def ReadMemory(self, address, datacount): # Read multiple hex words from memory
+    def ReadMemory(self, address, datacount):
         mem = []
         current_address = address
-        
         for _ in range(datacount):
-            # Read each word from the memory using ReadWord and append to mem
-            word = self.ReadWord(current_address)
-            mem.append(word)
-            
-            # Increment the address for the next word (assuming word size is 1 here)
+            mem.append(self.ReadWord(current_address))
             current_address += 1
-        
         return mem
         
-    def WriteWord(self, address, data): # Write 32 bit hex word into memory
-        RXWord = self.ReadWord(address) # Set address pointer
+    def WriteWord(self, address, data):
+        RXWord = self.ReadWord(address)
+        retry = 0
+        # PROTECTED: Caps the write verification loop at 10 retries
+        while RXWord != data and retry < 10:
+            self.SerialPort.write(b'W' + bytes(data, 'UTF-8'))
+            time.sleep(0.005) # Brief hardware pause to stabilize the UART bridge
+            RXWord = self.ReadWord(address)
+            retry += 1
+        if RXWord != data:
+            raise IOError(
+                f"Write verification failed at address {address}: "
+                f"expected {data}, read {RXWord!r} after {retry} attempts. "
+                "Keep the core in programming mode and check the connection."
+            )
         
-        while RXWord != data:
-            self.SerialPort.write(b'W' + bytes(data, 'UTF-8')) # Send write request
-            RXWord = self.ReadWord(address) # Write check
-        
-    def WriteInt(self, address, data): # Write integer value into memory
-        RXWord = self.ReadWord(address) # Set address pointer
-        
-        while RXWord != data:
-            self.SerialPort.write(b'W' + bytes(dec2hex(data, 8), 'UTF-8')) # Convert int data to hex and send write request
-            RXWord = self.ReadWord(address) # Write check          
+    def WriteInt(self, address, data):
+        self.WriteWord(address, dec2hex(data, 8))
                     
-    def WriteMemory(self, startAddr, mem): # Write multiple hex words into memory and read back to check
+    def WriteMemory(self, startAddr, mem):
         waddr = startAddr
-        
         for data in mem:
             self.WriteWord(waddr, data)
             waddr = waddr + 1
             
-    def WriteMemFromFile(self, filename): # Write all program memory from a mem file
+    def WriteMemFromFile(self, filename, watch_address=None):
         with open(filename, 'r') as file:
             lines = file.readlines()
 
-        start_address = None
-        memory_data = []
-
+        address = None
+        words = []
         for line in lines:
             line = line.strip()
-
-            # Check if the line contains a memory start address marked by "@"
             if line.startswith('@'):
-                if start_address is not None:
-                    # Write the previous memory block to the target address
-                    self.WriteMemory(start_address, memory_data)
-                
-                # Verilog memory address markers are hexadecimal.
-                start_address = int(line[1:], 16)
-                memory_data = []
+                address = int(line[1:])
             else:
-                # Split the data line into individual words
-                memory_data.extend(line.split())
-        
-        # Write any remaining data
-        if start_address is not None:
-            self.WriteMemory(start_address, memory_data)
-                
+                for data in line.split():
+                    if address is None:
+                        raise ValueError("Memory data before first @address")
+                    words.append((address, data))
+                    address += 1
+        if watch_address is not None and not any(a == watch_address for a, _ in words):
+            raise ValueError(f"Watch address {watch_address} is absent from {filename}")
+
+        watched_value = None
+        for address, data in words:
+            self.WriteWord(address, data)
+            if address == watch_address:
+                watched_value = data
+                print(f"Watching address {watch_address}: expected {data}", flush=True)
+            if watched_value is not None:
+                actual = self.ReadWord(watch_address)
+                if actual != watched_value:
+                    samples = [actual] + [self.ReadWord(watch_address) for _ in range(3)]
+                    raise IOError(
+                        f"Watch address {watch_address} changed after processing "
+                        f"write to address {address} with {data}: expected "
+                        f"{watched_value}, reads {samples}. Upload stopped."
+                    )
+            
     def CheckMemFromFile(self, filename):
-        mismatch_count = 0  # To count mismatches
-        
+        mismatch_count = 0 
         with open(filename, 'r') as file:
             lines = file.readlines()
 
@@ -112,37 +112,26 @@ class uart:
 
         for line in lines:
             line = line.strip()
-
-            # Check if the line contains a memory start address marked by "@"
             if line.startswith('@'):
                 if start_address is not None:
-                    # Read the memory from the actual system using ReadMemory
                     actual_memory = self.ReadMemory(start_address, len(expected_memory))
-                    
-                    # Compare the actual memory data with the expected data
                     for i, (expected, actual) in enumerate(zip(expected_memory, actual_memory)):
                         if expected != actual:
                             print(f"Mismatch at address {start_address+i}! Expected: {expected}, Actual: {actual}")
                             mismatch_count += 1
-
-                # Verilog memory address markers are hexadecimal.
-                start_address = int(line[1:], 16)
+                start_address = int(line[1:])
                 expected_memory = []
             else:
-                # Split the data line into individual words
                 expected_memory.extend(line.split())
         
-        # Check the last block of memory
         if start_address is not None:
             actual_memory = self.ReadMemory(start_address, len(expected_memory))
-            
             for i, (expected, actual) in enumerate(zip(expected_memory, actual_memory)):
                 if expected != actual:
                     print(f"Mismatch at address {start_address+i}! Expected: {expected}, Actual: {actual}")
                     mismatch_count += 1
 
-        # Return False if any mismatches were found, otherwise return True
         return mismatch_count == 0
 
-def dec2hex(dec, width): # Convert decimal to hex
+def dec2hex(dec, width):
     return hex(dec).split('x')[-1].upper().zfill(width)

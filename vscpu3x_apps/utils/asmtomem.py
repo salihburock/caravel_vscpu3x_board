@@ -40,7 +40,7 @@ def asm_to_mem(asm_file, output_file):
 
                 # Write @address only if there’s a gap
                 if current_address is None or address != current_address + 1:
-                    mem.write(f"@{address:X}\n")
+                    mem.write(f"@{address}\n")
                 mem.write(f"{data_value_hex}\n")
                 current_address = address
                 continue
@@ -69,7 +69,7 @@ def asm_to_mem(asm_file, output_file):
 
             # Write @address only if there’s a gap
             if current_address is None or address != current_address + 1:
-                mem.write(f"@{address:X}\n")
+                mem.write(f"@{address}\n")
             mem.write(f"{instruction_word_hex}\n")
             current_address = address
 

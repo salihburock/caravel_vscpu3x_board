@@ -61,7 +61,7 @@ void main()
 	/* Set up the housekeeping SPI to be connected internally so	*/
 	/* that external pin changes don't affect it.			*/
 
-    uint32_t gpio_data, gpio_data_prev;
+    uint32_t gpio_data;
 
     reg_spi_enable = 1;
     reg_wb_enable = 1;
@@ -72,27 +72,25 @@ void main()
 	// so that the CSB line is not left floating.  This allows
 	// all of the GPIO pins to be used for user functions.
 
-    reg_mprj_io_6   = GPIO_MODE_MGMT_STD_INPUT_NOPULL;
-    reg_mprj_io_7   = GPIO_MODE_MGMT_STD_INPUT_NOPULL;
-    reg_mprj_io_8   = GPIO_MODE_MGMT_STD_BIDIRECTIONAL;
-    reg_mprj_io_9   = GPIO_MODE_MGMT_STD_BIDIRECTIONAL;
-    reg_mprj_io_10  = GPIO_MODE_MGMT_STD_BIDIRECTIONAL;
-    reg_mprj_io_11  = GPIO_MODE_USER_STD_INPUT_NOPULL;
+    reg_mprj_io_8   = GPIO_MODE_USER_STD_INPUT_NOPULL;
+    reg_mprj_io_9   = GPIO_MODE_USER_STD_INPUT_NOPULL;
+    reg_mprj_io_10  = GPIO_MODE_USER_STD_INPUT_NOPULL;
+    reg_mprj_io_11  = GPIO_MODE_USER_STD_INPUT_PULLUP;
     reg_mprj_io_12  = GPIO_MODE_USER_STD_OUTPUT;
     reg_mprj_io_13  = GPIO_MODE_USER_STD_OUTPUT;
     reg_mprj_io_14  = GPIO_MODE_USER_STD_OUTPUT;
     reg_mprj_io_15  = GPIO_MODE_USER_STD_OUTPUT;
-    reg_mprj_io_16  = GPIO_MODE_USER_STD_INPUT_NOPULL;
-    reg_mprj_io_17  = GPIO_MODE_USER_STD_INPUT_NOPULL;
-    reg_mprj_io_18  = GPIO_MODE_USER_STD_INPUT_NOPULL;
-    reg_mprj_io_19  = GPIO_MODE_USER_STD_INPUT_NOPULL;
-    reg_mprj_io_20  = GPIO_MODE_USER_STD_INPUT_NOPULL;
-    reg_mprj_io_21  = GPIO_MODE_USER_STD_INPUT_NOPULL;
-    reg_mprj_io_22  = GPIO_MODE_USER_STD_INPUT_NOPULL;
-    reg_mprj_io_23  = GPIO_MODE_USER_STD_INPUT_NOPULL;
-    reg_mprj_io_24  = GPIO_MODE_USER_STD_INPUT_NOPULL;
-    reg_mprj_io_25  = GPIO_MODE_USER_STD_INPUT_NOPULL;
-    reg_mprj_io_26  = GPIO_MODE_USER_STD_INPUT_NOPULL;
+    reg_mprj_io_16  = GPIO_MODE_USER_STD_INPUT_PULLDOWN;
+    reg_mprj_io_17  = GPIO_MODE_USER_STD_INPUT_PULLDOWN;
+    reg_mprj_io_18  = GPIO_MODE_USER_STD_INPUT_PULLDOWN;
+    reg_mprj_io_19  = GPIO_MODE_USER_STD_INPUT_PULLDOWN;
+    reg_mprj_io_20  = GPIO_MODE_USER_STD_INPUT_PULLDOWN;
+    reg_mprj_io_21  = GPIO_MODE_USER_STD_INPUT_PULLDOWN;
+    reg_mprj_io_22  = GPIO_MODE_MGMT_STD_INPUT_PULLDOWN;
+    reg_mprj_io_23  = GPIO_MODE_MGMT_STD_INPUT_PULLDOWN;
+    reg_mprj_io_24  = GPIO_MODE_MGMT_STD_OUTPUT;
+    reg_mprj_io_25  = GPIO_MODE_MGMT_STD_OUTPUT;
+    reg_mprj_io_26  = GPIO_MODE_MGMT_STD_OUTPUT;
     reg_mprj_io_27  = GPIO_MODE_USER_STD_OUTPUT;
     reg_mprj_io_28  = GPIO_MODE_USER_STD_OUTPUT;
     reg_mprj_io_29  = GPIO_MODE_USER_STD_OUTPUT;
@@ -116,13 +114,12 @@ void main()
 	reg_la0_data = 0x0000000B;
 	
     while(1){
-        // Read pins 7:6 and write them to pins 26:25 to debounce program pins
-        gpio_data_prev = gpio_data & 0x00000600;
-        gpio_data = (reg_mprj_datal & 0x000000C0) << 3; 
-        delay(1000000); // Wait for 500ms
-        // Pulse reset at the beginning and the end of programming mode
-        gpio_data |= ((!gpio_data_prev && gpio_data) || (gpio_data_prev && !gpio_data))  ? 0x0 : 0x100;
-        reg_mprj_datal = gpio_data; 
-        delay(1000000); // Wait for 500ms
+        // Read pins 37:36 and write them to pins 26:25 to debounce program pins
+        gpio_data = (reg_mprj_datal & 0x00C00000) << 3; 
+        gpio_data |= (gpio_data) ? 0x01000000 : 0x00000000;
+        delay(5000000); // Wait for 500ms
+        
+        reg_mprj_datal |= gpio_data; 
+        delay(5000000); // Wait for 500ms
     }
 }
