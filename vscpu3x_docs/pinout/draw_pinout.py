@@ -25,7 +25,7 @@ board = ET.parse(P.parent / 'topview.svg').getroot()
 board.set('viewBox', '479.8 190.5 284.5 1110')
 board.set('width', '284.5'); board.set('height', '1110')
 # Replace the drawing's red raster tint with vector material colors. Keep the
-# supplied placement/outline geometry; do not modify docs/topview.svg.
+# supplied placement/outline geometry; do not modify vscpu3x_docs/topview.svg.
 ns = '{http://www.w3.org/2000/svg}'
 for parent in board.iter():
     for element in list(parent):
@@ -120,7 +120,7 @@ for i,(name,key) in enumerate([('Power','power'),('Ground','ground'),('GPIO inpu
  x=70+i*246;rect(x,1402,18,18,C[key],rx=3);text(x+29,1418,name,18)
 text(70,1468,'Orientation: this is the top view. J1/J3 and P1/P2 are bottom-mounted; their through-hole positions are shown from above.',18,'#a5b6c5')
 text(70,1500,'GPIO labels are the PCB net names. IO numbers are Caravel signals; QFN numbers identify pins of the 64-pin silicon package.',18,'#a5b6c5')
-text(70,1532,'Board artwork: docs/topview.svg. Pin mapping: Main.PcbDoc + Caravel M.2 QFN schematic + VSCPU RTL.',18,'#a5b6c5')
+text(70,1532,'Board artwork: vscpu3x_docs/topview.svg. Pin mapping: Main.PcbDoc + Caravel M.2 QFN schematic + VSCPU RTL.',18,'#a5b6c5')
 text(70,1570,'VSCPU_TestBoard_v2 · pinout reference',16,'#8199ac');text(1830,1570,'2026-10-05',16,'#8199ac',anchor='end')
 out.append('</svg>');(P/'vscpu_carrier_pinout.svg').write_text('\n'.join(out))
 with (P/'connector_pinout.csv').open('w') as f:

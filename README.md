@@ -49,11 +49,11 @@ makes the board unreliable.
 
 ## Pinout
 
-![VSCPU carrier pinout](docs/pinout/vscpu_carrier_pinout.png)
+![VSCPU carrier pinout](vscpu3x_docs/pinout/vscpu_carrier_pinout.png)
 
 The number in a board net name such as `GPIO_OUT_0` is not the register bit;
 use the bit shown next to it. A printable copy is in
-[`docs/pinout/vscpu_carrier_pinout.pdf`](docs/pinout/vscpu_carrier_pinout.pdf),
+[`vscpu3x_docs/pinout/vscpu_carrier_pinout.pdf`](vscpu3x_docs/pinout/vscpu_carrier_pinout.pdf),
 and the [quickstart guide](vscpu3x_docs/Quickstart.md#gpio-memory-mapped-io)
 explains the two GPIO registers.
 

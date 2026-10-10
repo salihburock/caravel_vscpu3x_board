@@ -3,14 +3,14 @@ Custom CH340 carrier pinout
 
 vscpu_carrier_pinout.png is the display/share image; the PDF is scalable for
 printing and the SVG is editable. connector_pinout.csv contains the J1/J3 table.
-The illustration uses docs/topview.svg, with the M.2 module removed and the
+The illustration uses vscpu3x_docs/topview.svg, with the M.2 module removed and the
 USB connector at the bottom. Bottom-mounted header holes are shown from above;
 do not treat it as a bottom-view drawing.
 
 Sources
 -------
 
-* docs/topview.svg: supplied top-view artwork. The generator crops the drawing
+* vscpu3x_docs/topview.svg: supplied top-view artwork. The generator crops the drawing
   sheet in an embedded copy and scales it to align with the extracted PCB pad
   coordinates. The source SVG is not modified.
 * https://github.com/ebubekirtascieee/VSCPU_Efabless-M.2_Test_Board_Two_Layers
@@ -44,8 +44,8 @@ and not to scale.
 
 Export from the repository root::
 
-    inkscape docs/pinout/vscpu_carrier_pinout.svg --export-type=png --export-filename=docs/pinout/vscpu_carrier_pinout.png
-    inkscape docs/pinout/vscpu_carrier_pinout.svg --export-type=pdf --export-filename=docs/pinout/vscpu_carrier_pinout.pdf
+    inkscape vscpu3x_docs/pinout/vscpu_carrier_pinout.svg --export-type=png --export-filename=vscpu3x_docs/pinout/vscpu_carrier_pinout.png
+    inkscape vscpu3x_docs/pinout/vscpu_carrier_pinout.svg --export-type=pdf --export-filename=vscpu3x_docs/pinout/vscpu_carrier_pinout.pdf
 
 draw_pinout.py is the original layout generator; running it overwrites subsequent
 manual edits. It is retained for the original extraction/layout logic only.
