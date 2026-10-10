@@ -1,0 +1,17 @@
+Connector,Pin,PCB net,Function / Caravel IO,QFN package pin
+J3,1,+3.3V,3.3 V rail,
+J3,2,GPIO_IN_1,IO16 · VSCPU input bit 0,53
+J3,3,GPIO_IN_0,IO17 · VSCPU input bit 1,54
+J3,4,GPIO_OUT_0,IO30 · VSCPU output bit 3,7
+J3,5,GPIO_OUT_1,IO29 · VSCPU output bit 2,6
+J3,6,GPIO_OUT_2,IO28 · VSCPU output bit 1,5
+J3,7,GPIO_OUT_3,IO27 · VSCPU output bit 0,4
+J3,8,GND,Ground,
+J1,1,GND,Ground,
+J1,2,SDO,IO1 · Caravel → host,32
+J1,3,SDI,IO2 · Host → Caravel,33
+J1,4,CS,IO3 · Active-low SPI select,34
+J1,5,SCK,IO4 · Housekeeping SPI clock,35
+J1,6,RV_TX,IO6 / IO11 · See UART note,37 / 45
+J1,7,RV_RX,IO5 / IO12 · See UART note,36 / 46
+J1,8,+3.3V,3.3 V rail,

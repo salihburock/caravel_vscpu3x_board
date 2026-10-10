@@ -1,0 +1,109 @@
+{
+  "name": "vscpu-tools",
+  "displayName": "VSCPU Tools",
+  "description": "VSCPU assembly editing, strict assembly, and verified UART uploads for Caravel VSCPU3x.",
+  "version": "0.1.1",
+  "publisher": "vscpu-local",
+  "license": "UNLICENSED",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "main": "./src/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Language features work; UART upload requires a trusted workspace.",
+      "restrictedConfigurations": [
+        "vscpu.pythonPath"
+      ]
+    },
+    "virtualWorkspaces": false
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "vscpu",
+        "aliases": [
+          "VSCPU Assembly",
+          "vscpu"
+        ],
+        "extensions": [
+          ".asm"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "vscpu",
+        "scopeName": "source.vscpu",
+        "path": "./syntaxes/vscpu.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "vscpu.assemble",
+        "title": "VSCPU: Assemble Current File to .mem",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "vscpu.upload",
+        "title": "VSCPU: Assemble and Upload Current File",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "vscpu.selectCore",
+        "title": "VSCPU: Select Target Core"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "vscpu.assemble",
+          "when": "editorLangId == vscpu",
+          "group": "navigation"
+        },
+        {
+          "command": "vscpu.upload",
+          "when": "editorLangId == vscpu && isWorkspaceTrusted",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "VSCPU",
+      "properties": {
+        "vscpu.core": {
+          "type": "string",
+          "enum": [
+            "cm",
+            "ct",
+            "a0"
+          ],
+          "default": "cm",
+          "description": "Target SRAM capacity and programming-mode prompt.",
+          "scope": "resource"
+        },
+        "vscpu.serialPort": {
+          "type": "string",
+          "default": "/dev/ttyUSB0",
+          "description": "Preferred device to highlight in the detected serial-port list.",
+          "scope": "resource"
+        },
+        "vscpu.pythonPath": {
+          "type": "string",
+          "default": "python3",
+          "scope": "machine-overridable",
+          "description": "Python executable with pyserial installed. Executable path only; no shell arguments."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "test": "node test/assembler.test.js && node test/serialPorts.test.js && python3 -m unittest discover -s test -p \"test_*.py\""
+  }
+}

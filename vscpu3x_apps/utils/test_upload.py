@@ -16,6 +16,18 @@ import testutils
 
 
 class UploadTests(unittest.TestCase):
+    @patch('builtins.input', return_value='')
+    @patch.object(run_test.time, 'sleep')
+    @patch.object(run_test.os.path, 'exists', side_effect=lambda p: '_chk' not in p)
+    def test_cm_only_does_not_upload_idle_images(self, exists, sleep, user_input):
+        device = Mock()
+        device.CheckMemFromFile.return_value = True
+        with contextlib.redirect_stdout(io.StringIO()):
+            run_test.main('run_marker', device, False, core='cm')
+        device.WriteMemFromFile.assert_called_once_with('../run_marker/run_marker_cm.mem')
+        device.CheckMemFromFile.assert_called_once_with('../run_marker/run_marker_cm.mem')
+        self.assertEqual(user_input.call_count, 1)
+
     @patch("builtins.open", mock_open(read_data="@752\n00000000\n00000000\n"))
     def test_exclusion_rejects_word_inside_block(self):
         with self.assertRaisesRegex(ValueError, "excluded address 753"):
